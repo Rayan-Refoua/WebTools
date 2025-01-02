@@ -1,0 +1,116 @@
+// ==UserScript==
+// @name         Directam Copier
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  Copy text from elements matching a specific pattern
+// @author       Your Name
+// @match        *://*/*
+// @grant        none
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    console.log("User script running...");
+
+    // Create the notification element
+    var notification = document.createElement('div');
+    notification.id = 'notification';
+    notification.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #770000;
+        color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        text-align: center;
+        display: none;
+    `;
+    document.body.appendChild(notification);
+
+    // Function to show notification
+    function showNotification(textContent) {
+        notification.textContent = textContent;
+        notification.style.display = 'block';
+        setTimeout(function() {
+            notification.style.display = 'none';
+        }, 3000);
+    }
+
+    // Function to copy text content to clipboard
+function copyToClipboard(text) {
+    var tempInput = document.createElement("textarea");
+    tempInput.value = text;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    var success = document.execCommand("copy");
+    document.body.removeChild(tempInput);
+    console.log("Text copied to clipboard:", text);
+    return success ? 1 : 0;
+}
+
+
+// Function to collect text content from specified elements
+function collectText() {
+    var groups = document.querySelectorAll(".chat-group.d-flex.justify-start.flex-row-reverse.align-start");
+    console.log("Groups found:", groups);
+
+    var elements = [];
+    groups.forEach(function(group) {
+        Array.prototype.forEach.call(group.querySelectorAll("*"), function(el) {
+            if (el.getAttributeNames().some(function(attr) {
+                return /^data-v-.*/.test(attr);
+            })) {
+                elements.push(el);
+                console.log("Element found:", el, "Text content:", el.textContent);
+            }
+        });
+    });
+
+    var textContent = elements.map(function(el) {
+        return el.textContent.trim();
+    }).filter(function(text) {
+        return text.length > 0;
+    });
+
+    // Remove duplicates
+    textContent = Array.from(new Set(textContent)).join("\n");
+
+    console.log("Text content to copy:", textContent);
+    if (textContent) {
+        function attemptCopy() {
+            var success = copyToClipboard(textContent);
+            if (success === 1) {
+                showNotification("Text copied to clipboard:\n" + textContent);
+                // Navigate to next page
+                goToNextPage();
+            } else {
+                showNotification("Click on me to allow copy");
+                setTimeout(attemptCopy, 500); // Try again after 1 second
+            }
+        }
+        attemptCopy();
+    } else {
+        showNotification("No text found to copy.");
+    }
+}
+
+
+    // Function to navigate to the next page
+    function goToNextPage() {
+        var currentUrl = window.location.href;
+        var url = new URL(currentUrl);
+        var searchParams = url.searchParams;
+        var currentPage = parseInt(searchParams.get('page')) || 1;
+        searchParams.set('page', currentPage + 1);
+        url.search = searchParams.toString();
+        window.location.href = url.toString();
+    }
+
+    // Delay to allow page to load completely
+    setTimeout(collectText, 3000);
+})();
