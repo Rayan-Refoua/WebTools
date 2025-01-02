@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         LTR for Mobile Input
 // @namespace    http://tampermonkey.net/
-// @version      1.0
-// @description  Sets text direction to left-to-right for inputs with name="mobile"
-// @author       Rayan Refoua
+// @version      0.1
+// @description  Lots of fix/features for hanasab admin page
+// @author       Your Name
 // @match        https://panel.drhanasabzadeh.ir/*
+// @icon            https://panel.drhanasabzadeh.ir/images/apps/T9d3d31729765570.png
 // @grant        none
 // ==/UserScript==
 
@@ -85,7 +86,7 @@
         });
     }, false);
 
-        // Function to add the class "menu-item-open" to elements if not already present
+    // Function to add the class "menu-item-open" to elements if not already present
     function addMenuItemOpenClass() {
         var elements = document.querySelectorAll('.menu-item.menu-item-submenu');
         elements.forEach(function(element) {
@@ -97,6 +98,157 @@
 
     // Add the class to all matching elements when the page loads
     window.addEventListener('load', addMenuItemOpenClass, false);
+
+
+
+    // Function to create the dialog box
+    function createDialog() {
+        const dialog = document.createElement('div');
+        dialog.id = 'courseDialog';
+        dialog.style.position = 'fixed';
+        dialog.style.top = '50px';
+        dialog.style.left = '50px';
+        dialog.style.width = '300px';
+        dialog.style.padding = '10px';
+        dialog.style.border = '1px solid #ccc';
+        dialog.style.backgroundColor = '#fff';
+        dialog.style.zIndex = '10000';
+        dialog.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.1)';
+
+        dialog.innerHTML = `
+    <div style="cursor: move; background-color: #f0f0f0; padding: 5px; border-bottom: 1px solid #ccc;">
+        <span>Course Submission</span>
+        <button id="hideDialog" style="float: right;">Hide</button>
+    </div>
+    <form id="courseForm">
+        <label for="courseref">Course Reference (ID):</label>
+        <input type="text" id="courseref" name="courseref" required>
+
+        <label for="_token">Token:</label>
+        <input type="text" id="_token" name="_token" required>
+
+        <label for="name_l70">Names (one per line):</label>
+        <textarea id="name_l70" name="name_l70" rows="5" required></textarea>
+
+        <button type="button" id="submitButton">Submit</button>
+
+        <label for="debug">Debug Information:</label>
+        <textarea id="debug" name="debug" rows="5" readonly style="width: 100%;"></textarea>
+    </form>
+`;
+
+        document.body.appendChild(dialog);
+
+        // Make the dialog movable
+        makeMovable(dialog);
+
+        // Hide button functionality
+        document.getElementById('hideDialog').onclick = function() {
+            dialog.style.display = 'none';
+        };
+
+        // Auto-fill the token and course reference
+        document.getElementById('_token').value = document.querySelector('input[name="_token"]').value;
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseref = urlParams.get('courseref');
+        if (courseref) {
+            document.getElementById('courseref').value = courseref;
+        }
+
+        // Submit button functionality
+        document.getElementById('submitButton').onclick = function() {
+            submitData();
+        };
+    }
+
+    // Function to make the dialog movable
+    function makeMovable(element) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        const header = element.firstElementChild;
+        header.onmousedown = dragMouseDown;
+
+        function dragMouseDown(e) {
+            e = e || window.event;
+            e.preventDefault();
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            document.onmouseup = closeDragElement;
+            document.onmousemove = elementDrag;
+        }
+
+        function elementDrag(e) {
+            e = e || window.event;
+            e.preventDefault();
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            element.style.top = (element.offsetTop - pos2) + "px";
+            element.style.left = (element.offsetLeft - pos1) + "px";
+        }
+
+        function closeDragElement() {
+            document.onmouseup = null;
+            document.onmousemove = null;
+        }
+    }
+
+    function submitData() {
+        const form = document.getElementById('courseForm');
+        const courseref = form.courseref.value;
+        const token = form._token.value;
+        const names = form.name_l70.value.split('\n');
+        const url = 'https://panel.drhanasabzadeh.ir/admin/meet/store';
+        const debugElement = document.getElementById('debug');
+        debugElement.value = ''; // Clear previous debug info
+
+        names.forEach((name, index) => {
+            const data = new URLSearchParams({
+                _token: token,
+                courseref: courseref,
+                name_l70: name.trim(),
+                type: 2,
+                price: '',
+                priceoff: '',
+                active: 1,
+                hour_delay: '',
+                langs_id: 70
+            });
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: data
+            })
+                .then(response => {
+                return response.text().then(text => {
+                    try {
+                        return JSON.parse(text);
+                    } catch (error) {
+                        return text;
+                    }
+                });
+            })
+                .then(result => {
+                const debugMessage = `Response for ${name.trim()}:\n${JSON.stringify(result, null, 2)}\n\n`;
+                debugElement.value += debugMessage;
+            })
+                .catch(error => {
+                const debugMessage = `Error for ${name.trim()}:\n${error}\n\n`;
+                debugElement.value += debugMessage;
+            });
+        });
+    }
+
+
+    // Check if the current page URL starts with the specified string
+    if (window.location.href.startsWith('https://panel.drhanasabzadeh.ir/admin/meet/create')) {
+        // Create and show the dialog box when the script runs
+        createDialog();
+    }
+
 
 
 })();
