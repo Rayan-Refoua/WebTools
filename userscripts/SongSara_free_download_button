@@ -1,0 +1,75 @@
+// ==UserScript==
+// @name         SongSara Free downloader
+// @namespace    http://tampermonkey.net/
+// @version      0.4
+// @description  edits songsara download links to allow free donloading of musics that play in site
+// @author       Rayan Refoua
+// @match        https://songsara.net/*
+// @grant        none
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    let attempts = 0;
+
+    function showNotification() {
+        const notification = document.createElement('div');
+        notification.textContent = 'لینک های دانلود فعال شدند!';
+        notification.style.position = 'fixed';
+        notification.style.top = '60px';
+        notification.style.right = '35px';
+        notification.style.backgroundColor = '#005fd4';
+        notification.style.color = '#fff';
+        notification.style.padding = '15px';
+        notification.style.borderRadius = '5px';
+        notification.style.zIndex = '10000';
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.transition = 'opacity 1s';
+            notification.style.opacity = '0';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 500);
+        }, 2000);
+    }
+
+    function updateAttributes() {
+        let linksChanged = false;
+
+        // Update data-dl1 attribute
+        const elements = document.querySelectorAll('li[data-title]');
+        elements.forEach(element => {
+            const dataSrc = element.getAttribute('data-src');
+            if (dataSrc) {
+                element.setAttribute('data-dl1', dataSrc);
+                linksChanged = true;
+            }
+        });
+
+        // Update link text
+        const links = document.querySelectorAll('ul.dldrop-links li a');
+        links.forEach(link => {
+            if (link.textContent.trim() === "MP3 320 Kbps") {
+                link.textContent = "🆓 MP3 320 Kbps 🆓";
+                linksChanged = true;
+            }
+        });
+
+        if (linksChanged) {
+            showNotification();
+        }
+
+        attempts++;
+        if (attempts >= 2) {
+            clearInterval(intervalId);
+        }
+    }
+
+    // Run the function initially
+    updateAttributes();
+
+    // Set an interval to run the function every 5 seconds
+    const intervalId = setInterval(updateAttributes, 2000);
+})();
