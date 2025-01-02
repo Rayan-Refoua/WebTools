@@ -250,5 +250,65 @@
     }
 
 
+    // Function to create labels and submit form
+    function createLabelsAndSubmitForm() {
+        // Add custom CSS to the page
+        const style = document.createElement('style');
+        style.type = 'text/css';
+        style.innerHTML = `
+            .lbmrg {
+                margin: 3px;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Find the select element by its id
+        const selectElement = document.getElementById('courseref');
+        if (selectElement) {
+            // Find the container with the class 'form-group row'
+            const container = selectElement.closest('.form-group.row');
+            if (container) {
+                // Create a new div element
+                const newDiv = document.createElement('div');
+                newDiv.style.marginTop = '10px';
+
+                // Find the submit button
+                const submitButton = document.querySelector('button[type="submit"].btn.btn-primary');
+
+                // Iterate over each option in the select element
+                Array.from(selectElement.options).forEach(option => {
+                    // Create a new label element for each option
+                    const label = document.createElement('label');
+                    label.textContent = option.text;
+                    label.className = 'label label-primary label-inline lbmrg';
+
+                    // Add click event listener to each label
+                    label.addEventListener('click', () => {
+                        selectElement.value = option.value;
+                        // Trigger change event on select element
+                        const event = new Event('change', { bubbles: true });
+                        selectElement.dispatchEvent(event);
+
+                        // Submit the form
+                        if (submitButton) {
+                            submitButton.click();
+                        }
+                    });
+
+                    // Append label to the new div
+                    newDiv.appendChild(label);
+                });
+
+                // Insert the new div after the container element
+                container.appendChild(newDiv);
+            }
+        }
+    }
+
+    // Check if the URL matches the specified pattern
+    if (window.location.href.startsWith('https://panel.drhanasabzadeh.ir/admin/meet')) {
+        createLabelsAndSubmitForm();
+    }
+
 
 })();
