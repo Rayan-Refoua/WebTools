@@ -309,5 +309,70 @@ if (window.location.href.startsWith('https://panel.drhanasabzadeh.ir/admin/meet'
     createLabelsAndSubmitForm();
 }
 
+    'use strict';
+
+    // Select all div elements with the "wave" class
+    var waveDivs = document.querySelectorAll('div.wave');
+
+    // Remove the "wave" class from each div
+    waveDivs.forEach(function(div) {
+        div.classList.remove('wave');
+    });
+
+
+    // Function to click the header and check the class
+    function clickAndCheck() {
+        const header = document.querySelector('th.sorting_asc[aria-controls="kt_datatable"]');
+        if (header) {
+            header.click();
+            setTimeout(() => {
+                if (header.classList.contains('sorting_desc')) {
+                    console.log('Class changed to sorting_desc');
+                } else {
+                    console.log('Class not changed, trying again...');
+                    clickAndCheck();
+                }
+            }, 300);
+        } else {
+            console.log('Header not found');
+        }
+    }
+
+    function setSelectOption() {
+        const select = document.querySelector('select[name="kt_datatable_length"][aria-controls="kt_datatable"]');
+        if (select) {
+            let optionExists = false;
+
+            // Check if the option for 1000 exists
+            Array.from(select.options).forEach(option => {
+                if (option.value === '1000') {
+                    optionExists = true;
+                    select.value = '1000';
+                }
+            });
+
+            // If the option does not exist, create it
+            if (!optionExists) {
+                const newOption = new Option('1000', '1000');
+                select.add(newOption);
+                select.value = '1000';
+            }
+
+            // Trigger the change event
+            const event = new Event('change', { bubbles: true });
+            select.dispatchEvent(event);
+
+            console.log('Select option set to 1000 and change event triggered');
+        } else {
+            console.log('Select element not found, retrying...');
+            setTimeout(setSelectOption, 300);
+        }
+    }
+
+    // Start the process
+    clickAndCheck();
+
+    // Start checking for the select element
+    setSelectOption();
 
 })();
