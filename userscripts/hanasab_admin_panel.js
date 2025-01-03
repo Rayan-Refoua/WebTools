@@ -6,6 +6,7 @@
 // @author       Your Name
 // @match        https://panel.drhanasabzadeh.ir/*
 // @icon            https://panel.drhanasabzadeh.ir/images/apps/T9d3d31729765570.png
+// @downloadURL https://raw.githubusercontent.com/Rayan-Refoua/WebTools/refs/heads/main/userscripts/hanasab_admin_panel.js
 // @grant        none
 // ==/UserScript==
 (function() {
