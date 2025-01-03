@@ -1,0 +1,40 @@
+// ==UserScript==
+// @name         Replace Download Links
+// @namespace    http://tampermonkey.net/
+// @version      0.4
+// @description  Replace download links with simple hyperlink text after 2 seconds
+// @author       rayanrefoua@gmail.com
+// @match        https://soft98.ir/*
+// @grant        none
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    // Function to replace all "dbdlll" elements with simple hyperlink text
+    function replaceDownloadLinks() {
+        // Get all elements with class "dbdlll"
+        var downloadLinks = document.querySelectorAll('a.dbdlll');
+
+        downloadLinks.forEach(function(link) {
+            // Create a new text node with the link's text content
+            var textNode = document.createTextNode(link.textContent);
+
+            // Create a new hyperlink element
+            var newLink = document.createElement('a');
+            newLink.href = link.href;
+            newLink.style.color = 'black'; // Make the link text red
+            newLink.style.position = 'relative';
+            newLink.style.zIndex = '999';
+
+            // Append the text node to the new hyperlink element
+            newLink.appendChild(textNode);
+
+            // Replace the old link with the new one
+            link.parentNode.replaceChild(newLink, link);
+        });
+    }
+
+    // Run the function to replace the download links after 3 seconds
+    setTimeout(replaceDownloadLinks, 2000);
+})();
