@@ -1,12 +1,11 @@
 // ==UserScript==
-// @name         LTR for Mobile Input
+// @name         Hanasab admin panel tools
 // @namespace    http://tampermonkey.net/
 // @version      0.1
 // @description  Lots of fix/features for hanasab admin page
 // @author       Your Name
 // @match        https://panel.drhanasabzadeh.ir/*
 // @icon            https://panel.drhanasabzadeh.ir/images/apps/T9d3d31729765570.png
-// @downloadURL https://raw.githubusercontent.com/Rayan-Refoua/WebTools/refs/heads/main/userscripts/hanasab_admin_panel.js
 // @grant        none
 // ==/UserScript==
 (function() {
@@ -22,8 +21,8 @@ if (mobileInput) {
     mobileInput.style.direction = 'ltr';
     mobileInput.style.fontFamily = "'Roboto Mono', monospace";
     mobileInput.style.fontSize = '20px';
-    // Check the input value every second
-    setInterval(checkAndConvertInputValue, 1000);
+    // Add an event listener for the input event
+    mobileInput.addEventListener('input', checkAndConvertInputValue);
 
 }
 
@@ -366,7 +365,7 @@ if (window.location.href.startsWith('https://panel.drhanasabzadeh.ir/admin/meet'
             console.log('Select option set to 1000 and change event triggered');
         } else {
             console.log('Select element not found, retrying...');
-            setTimeout(setSelectOption, 300);
+            setTimeout(setSelectOption, 1000);
         }
     }
 
