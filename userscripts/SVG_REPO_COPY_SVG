@@ -1,0 +1,87 @@
+// ==UserScript==
+// @name         SVGRepo Downloader and Copier
+// @namespace    http://tampermonkey.net/
+// @version      1.2
+// @description  Adds a button to download and copy SVG content
+// @author       Rayan and gpt4o
+// @match        *.svgrepo.com/svg/*
+// @grant        none
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    console.log("SVG Downloader and Copier Script: Script started.");
+
+    // Function to add the button and handle the download and copy actions
+    function addButtonAndHandleActions() {
+        // Find the target img element by style
+        var targetImg = document.querySelector('img[style="color:transparent;width:250px;height:250px"]');
+
+        if (targetImg) {
+            console.log("SVG Downloader and Copier Script: Target img found.");
+
+            // Create the button
+            var button = document.createElement('button');
+            button.innerText = 'Copy';
+            button.style.position = 'absolute';
+            button.style.right = '10px';
+            button.style.bottom = '10px';
+            button.style.padding = '10px 20px';
+            button.style.backgroundColor = '#007bff';
+            button.style.color = '#fff';
+            button.style.border = 'none';
+            button.style.borderRadius = '5px';
+            button.style.cursor = 'pointer';
+            button.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+            button.style.zIndex = '1000';
+
+            // Create a wrapper div to hold the image and button
+            var wrapperDiv = document.createElement('div');
+            wrapperDiv.style.position = 'relative';
+            wrapperDiv.style.display = 'inline-block';
+            wrapperDiv.appendChild(targetImg.cloneNode(true));
+            wrapperDiv.appendChild(button);
+
+            // Replace the original img with the wrapper div
+            targetImg.parentNode.replaceChild(wrapperDiv, targetImg);
+
+            // Handle button click
+            button.addEventListener('click', function() {
+                console.log("SVG Downloader and Copier Script: Button clicked.");
+
+                // Fetch the SVG content and copy to clipboard
+                fetch(targetImg.src)
+                    .then(response => response.text())
+                    .then(svgContent => {
+                        var tempInput = document.createElement('textarea');
+                        tempInput.value = svgContent;
+                        document.body.appendChild(tempInput);
+                        tempInput.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(tempInput);
+                        console.log("SVG Downloader and Copier Script: SVG content copied to clipboard.");
+
+                        // Change button text to "Copied!" and revert after 1 second
+                        button.innerText = 'Copied!';
+                        setTimeout(function() {
+                            button.innerText = 'Copy';
+                        }, 1000);
+                    })
+                    .catch(error => {
+                        console.error("SVG Downloader and Copier Script: Error fetching SVG content.", error);
+                    });
+            });
+        } else {
+            console.error("SVG Downloader and Copier Script: Target img not found.");
+        }
+    }
+
+    // Wait for the DOM to fully load
+    window.addEventListener('load', function() {
+        console.log("SVG Downloader and Copier Script: DOM fully loaded.");
+        addButtonAndHandleActions();
+    });
+
+    console.log("SVG Downloader and Copier Script: Script finished.");
+})();
