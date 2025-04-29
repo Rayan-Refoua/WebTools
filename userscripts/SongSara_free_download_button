@@ -1,8 +1,9 @@
+
 // ==UserScript==
-// @name         Songsara Downloader
+// @name         MP3 Downloader Button
 // @namespace    http://tampermonkey.net/
 // @version      1.0
-// @description  Finds audio source and updates MP3 links on Songsara pages
+// @description  Adds a download button to copy MP3 URLs
 // @author       You
 // @match        https://songsara.net/*
 // @grant        GM_setClipboard
@@ -11,138 +12,42 @@
 (function() {
     'use strict';
 
-    // Function to create the modal and table
-    function createModal(audioItems) {
-        const modal = document.createElement('div');
-        modal.style.cssText = `
-            position: fixed; top: 10%; left: 10%; width: 80%; height: 80%;
-            background: #1e1e1e; color: #fff; z-index: 9999; border: 1px solid #444;
-            padding: 20px; overflow-y: auto; box-shadow: 0 0 15px rgba(0, 0, 0, 0.5); display: none;
-            direction: ltr;
-        `;
-
-        const table = document.createElement('table');
-        table.style.cssText = `
-            width: 100%; border-collapse: collapse; text-align: center;
-        `;
-        table.innerHTML = `
-            <thead>
-                <tr>
-                    <th style="border: 1px solid #444; padding: 8px;">ID</th>
-                    <th style="border: 1px solid #444; padding: 8px;">Image</th>
-                    <th style="border: 1px solid #444; padding: 8px;">Artist</th>
-                    <th style="border: 1px solid #444; padding: 8px; font-weight: bold;">Title</th>
-                    <th style="border: 1px solid #444; padding: 8px;">Album</th>
-                    <th style="border: 1px solid #444; padding: 8px;">Duration</th>
-                    <th style="border: 1px solid #444; padding: 8px;">Download</th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        `;
-
-        audioItems.forEach((item, index) => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td style="border: 1px solid #444; padding: 8px;">${index + 1}</td>
-                <td style="border: 1px solid #444; padding: 8px;">
-                    <img src="${item.image}" style="width: 50px; height: 50px; border-radius: 4px;">
-                </td>
-                <td style="border: 1px solid #444; padding: 8px;">${item.artist}</td>
-                <td style="border: 1px solid #444; padding: 8px; font-weight: bold;">${item.title}</td>
-                <td style="border: 1px solid #444; padding: 8px;">${item.album}</td>
-                <td style="border: 1px solid #444; padding: 8px;">${item.duration}s</td>
-                <td style="border: 1px solid #444; padding: 8px;">
-                    <a href="${item.src}" download style="
-                        display: inline-block; padding: 5px 10px; background: #444;
-                        color: #fff; border-radius: 4px; text-decoration: none;
-                    ">Download</a>
-                </td>
-            `;
-            table.querySelector('tbody').appendChild(row);
+    function waitForElement(selector, timeout = 5000) {
+        return new Promise((resolve, reject) => {
+            const startTime = Date.now();
+            function check() {
+                const element = document.querySelector(selector);
+                if (element) {
+                    resolve(element);
+                } else if (Date.now() - startTime < timeout) {
+                    setTimeout(check, 500);
+                } else {
+                    reject(new Error("Element not found within time limit"));
+                }
+            }
+            check();
         });
-
-        modal.appendChild(table);
-
-        const buttons = document.createElement('div');
-        buttons.style.marginTop = '20px';
-
-        // Copy all links button
-        const copyBtn = document.createElement('button');
-        copyBtn.textContent = 'Copy All Links';
-        copyBtn.style.cssText = `
-            margin-right: 10px; padding: 10px; background: #444; color: #fff;
-            border: none; cursor: pointer; border-radius: 4px;
-        `;
-        copyBtn.onclick = () => {
-            const allLinks = audioItems.map(item => item.src).join('\n');
-            GM_setClipboard(allLinks);
-            alert('Links copied to clipboard!');
-        };
-
-        // Download all links button
-        const downloadBtn = document.createElement('button');
-        downloadBtn.textContent = 'Download All Links';
-        downloadBtn.style.cssText = `
-            padding: 10px; background: #444; color: #fff;
-            border: none; cursor: pointer; border-radius: 4px;
-        `;
-        downloadBtn.onclick = () => {
-            audioItems.forEach(item => {
-                const link = document.createElement('a');
-                link.href = item.src;
-                link.download = item.title;
-                link.click();
-            });
-        };
-
-        buttons.appendChild(copyBtn);
-        buttons.appendChild(downloadBtn);
-        modal.appendChild(buttons);
-
-        // Close button
-        const closeButton = document.createElement('button');
-        closeButton.textContent = 'Close';
-        closeButton.style.cssText = `
-            position: absolute; top: 10px; right: 10px; padding: 5px;
-            background: #444; color: #fff; border: none; cursor: pointer;
-        `;
-        closeButton.onclick = () => modal.style.display = 'none';
-        modal.appendChild(closeButton);
-
-        document.body.appendChild(modal);
-
-        // Add button to trigger the modal
-        const triggerButton = document.createElement('button');
-        triggerButton.textContent = 'DL';
-        triggerButton.style.cssText = `
-            position: relative; margin-top: 10px; padding: 10px 20px;
-            background: rgba(0, 0, 0, 0.5); color: #fff; border: none;
-            border-radius: 4px; backdrop-filter: blur(10px);
-            cursor: pointer;
-        `;
-        triggerButton.onclick = () => modal.style.display = 'block';
-
-        const targetElement = document.querySelector('section.dropdown.dlbox-Si');
-        if (targetElement) {
-            targetElement.insertAdjacentElement('afterend', triggerButton);
-        }
     }
 
-    // Extract data and initialize the modal
-    window.addEventListener('load', () => {
-        const audioList = document.querySelector('ul.audioplayer-audios[style="display:none;"]');
-        if (audioList) {
-            const items = Array.from(audioList.querySelectorAll('li')).map(li => ({
-                artist: li.getAttribute('data-artist'),
-                title: li.getAttribute('data-title'),
-                album: li.getAttribute('data-album'),
-                image: li.getAttribute('data-image'),
-                duration: li.getAttribute('data-duration'),
-                src: li.getAttribute('data-src')
-            }));
+    function createDownloadButton(targetElement) {
+        const button = document.createElement("button");
+        button.textContent = "Copy Links";
+        button.style.padding = "5px";
+        button.style.cursor = "pointer";
+        button.addEventListener("click", () => {
+            const urls = Array.from(document.querySelectorAll("[data-src]"))
+                .map(el => el.getAttribute("data-src"))
+                .filter(src => src && src.endsWith(".mp3"));
+            if (urls.length > 0) {
+                GM_setClipboard(urls.join("\n"));
+                alert("MP3 URLs copied to clipboard!");
+            } else {
+                alert("No MP3 URLs found.");
+            }
+        });
 
-            createModal(items);
-        }
-    });
+        targetElement.parentNode.insertBefore(button, targetElement.nextSibling);
+    }
+
+    waitForElement(".audioplayer-playpause").then(createDownloadButton).catch(console.error);
 })();
